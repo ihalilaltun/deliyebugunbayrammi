@@ -18,7 +18,8 @@
       var s = document.getElementsByTagName('script')[0];
       s.parentNode.insertBefore(wa, s);
     }
-  })('//cdn.segmentify.com/v3/qa/segmentify.debug.js', 'Segmentify', {
+  //})('//cdn.segmentify.com/v3/qa/segmentify.debug.js', 'Segmentify', {
+  })('//cdn.segmentify.com/v3/dev/safari/segmentify.debug.js', 'Segmentify', {
     segmentifyApiUrl: '//gandalf-test.segmentify.com/',
     segmentifyPushUrl: '//gimli-test.segmentify.com/',	  
     categoryHierarchy: true
