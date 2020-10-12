@@ -1,13 +1,7 @@
 'use strict';
-var cur_date = new Date().toJSON().slice(0,10).replace(/-/g,'');
-console.log('I am being updated at' + cur_date);
-
-'use strict';
 
 var defaults = {
   icon: 'https://cdn.segmentify.com/push/error.png',
-  restUrl: 'https://gimli-test.segmentify.com/',
-  apiKey: '17baaf3c-6c67-47f5-99f9-fd300cef2ead',
   errorTitle: 'Notification Failed',
   errorMessage: 'Can\'t show the push notification due to possible network problem.'
 };
@@ -37,10 +31,14 @@ self.addEventListener('push', function (event) {
             return showSuccess(payloadJson);
           }
         } catch (error) {
-          return showError(error, subscriptionId);
+          return showError(error.message, subscriptionId, event.data.text());
         }
       }).catch(function (error) {
-      return showError(error);
+      var data = '';
+      if (event.data) {
+        data = event.data.text();
+      }
+      return showError(error.message, '', data);
     })
   );
 });
@@ -83,9 +81,6 @@ self.addEventListener('notificationclick', function (event) {
       });
       break;
   }
-
-  // Now wait for the promise to keep the permission alive.
-  event.waitUntil(Promise.all([interaction(event.notification.data, 'click'), promise]));
 });
 
 self.addEventListener('notificationclose', function (event) {
@@ -117,14 +112,27 @@ function showSuccess(data) {
   notification.data = {};
   notification.data.url = data.redirectUrl;
   if (data.actions && getBrowserName() !== 'Firefox') {
-    notification.actions = JSON.parse(data.actions) || [];
-    notification.data.actionUrls = JSON.parse(data.actionUrls) || [];
+    if (typeof data.actions === 'object') {
+      notification.actions = data.actions;
+    } else if (typeof data.actions === 'string') {
+      notification.actions = JSON.parse(data.actions) || [];
+    } else {
+      notification.actions = [];
+    }
+    if (typeof data.actionUrls === 'object') {
+      notification.data.actionUrls = data.actionUrls;
+    } else if (typeof data.actionUrls === 'string') {
+      notification.data.actionUrls = JSON.parse(data.actionUrls) || [];
+    } else {
+      notification.actionUrls = [];
+    }
   }
+  notification.data.dataCenterUrl = data.dataCenterUrl;
   if (data.instanceId) {
-    notification.data.apiKey = defaults.apiKey;
+    notification.data.apiKey = data.apiKey;
     notification.data.instanceId = data.instanceId;
     notification.data.userId = data.userId || '';
-    return fetch(defaults.restUrl + 'interaction/notification?apiKey=' + defaults.apiKey + '&instanceId=' + data.instanceId + '&type=show').then(function () {
+    return fetch(data.dataCenterUrl + 'interaction/notification?apiKey=' + data.apiKey + '&instanceId=' + data.instanceId + '&type=show').then(function () {
       return showNotification(notification);
     }).catch(function (err) {
       return showNotification(notification);
@@ -134,7 +142,7 @@ function showSuccess(data) {
   }
 }
 
-function showError(error, subscriptionId) {
+function showError(error, subscriptionId, payload) {
   var notification = {};
   notification.title = defaults.errorTitle;
   notification.message = defaults.errorMessage;
@@ -142,9 +150,18 @@ function showError(error, subscriptionId) {
   notification.image = '';
   notification.requireInteraction = false;
   notification.data = {};
-  return fetch(defaults.restUrl + 'error/notification?apiKey=' + defaults.apiKey + '&message=' + error + '&subscriptionId=' + (subscriptionId || 'empty_subscription')).then(function () {
+
+  return fetch('https://gimli-dev.segmentify.com/error/notification', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'SegmentifyPushQuery':'SegmentifyPushQuery'},
+    body: JSON.stringify({
+      subscriptionId: subscriptionId || 'empty_subscription',
+      message: error || '',
+      payload: payload || ''
+    })
+  }).then(function() {
     return showNotification(notification);
-  }).catch(function (err) {
+  }).catch(function(err) {
     return showNotification(notification);
   });
 }
@@ -171,10 +188,10 @@ function showNotification(notification) {
 
 function interaction(notificationData, type) {
   if (notificationData.apiKey && notificationData.instanceId) {
-    if (!defaults.restUrl.endsWith('/')) {
-      defaults.restUrl = defaults.restUrl + '/';
+    if (!notificationData.dataCenterUrl.endsWith('/')) {
+      notificationData.dataCenterUrl = notificationData.dataCenterUrl + '/';
     }
-    var url = defaults.restUrl + 'interaction/notification?apiKey=' + defaults.apiKey
+    var url = notificationData.dataCenterUrl + 'interaction/notification?apiKey=' + notificationData.apiKey
       + '&instanceId=' + notificationData.instanceId + '&userId=' + notificationData.userId + '&type=' + type;
     return fetch(url).catch(function (err) {
     });
