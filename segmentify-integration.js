@@ -19,13 +19,13 @@
       s.parentNode.insertBefore(wa, s);
     }
   //})('//cdn.segmentify.com/v3/qa/segmentify.debug.js', 'Segmentify', {
-  })('//cdn.segmentify.com/v3/dev/safari/segmentify.debug.js', 'Segmentify', {
-    segmentifyApiUrl: '//gandalf-test.segmentify.com/',
-    segmentifyPushUrl: '//gimli-test.segmentify.com/',	  
+  })('//cdn.segmentify.com/v3/dev/segmentify.debug.js', 'Segmentify', {
+    segmentifyApiUrl: '//gandalf-dev.segmentify.com/',
+    segmentifyPushUrl: '//gimli-dev.segmentify.com/',	  
     categoryHierarchy: true
   });
 
-  Segmentify('apikey', '17baaf3c-6c67-47f5-99f9-fd300cef2ead',true,false);
+  Segmentify('apikey', '5069fd88-e601-47c5-8ab6-950a89e19af4',true,false);
 
   function waitSegmentifyAndjQuery() {
     if (window["_SgmntfY_"] && window["_SgmntfY_"]._getJq()) {
